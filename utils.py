@@ -1,5 +1,4 @@
 import httpimport
-from error import InputException
 from typing import Callable
 from inspect import getmembers, isfunction
 import re
@@ -19,7 +18,7 @@ def get_funcs_from_url(url: str) -> [Callable]:
     """
     # TODO: Support more types of urls
     if not is_github_gist(url):
-        raise InputException("Url is not a Github Gist")
+        raise Exception("Url is not a Github Gist")
 
     url = prepare_url(url)
 
