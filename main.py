@@ -5,6 +5,7 @@ Use the automation_context module to wrap your function in an
   Automate context helper
 """
 
+from maple.models import maple
 from pydantic import Field
 from speckle_automate import (
     AutomateBase,
@@ -80,8 +81,10 @@ def automate_function(
     # automate_context.store_file_result("./report.pdf")
 
 
-def format_error_message(case, assertion) -> str:
-    return f"{case.spec_name}.\nOn {len(assertion.failed)} objects, assertion {assertion.assertion_type} failed."
+def format_error_message(
+    case: maple.models.Result, assertion: maple.models.Assertion
+) -> str:
+    return f"{case.spec_name}.\nOn {len(assertion.failing)} objects, assertion {assertion.comparer} failed."
 
 
 # make sure to call the function with the executor
@@ -93,4 +96,3 @@ if __name__ == "__main__":
 
     # if the function has no arguments, the executor can handle it like so
     # execute_automate_function(automate_function_without_inputs)
-
