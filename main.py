@@ -1,16 +1,18 @@
-"""This module contains the business logic of the function.
+"""
+This module contains the business logic of the function.
 
-Use the automation_context module to wrap your function in an Autamate context helper
+Use the automation_context module to wrap your function in an
+  Automate context helper
 """
 
-from pydantic import Field, SecretStr
+from pydantic import Field
 from speckle_automate import (
     AutomateBase,
     AutomationContext,
     execute_automate_function,
 )
-
-from flatten import flatten_base
+import maple as mp
+from utils import get_funcs_from_url
 
 
 class FunctionInputs(AutomateBase):
@@ -21,14 +23,10 @@ class FunctionInputs(AutomateBase):
     https://docs.pydantic.dev/latest/usage/models/
     """
 
-    # an example how to use secret values
-    whisper_message: SecretStr = Field(title="This is a secret message")
-    forbidden_speckle_type: str = Field(
-        title="Forbidden speckle type",
-        description=(
-            "If a object has the following speckle_type,"
-            " it will be marked with an error."
-        ),
+    url: str = Field(
+        default="Placeholder",
+        title="Tests Specs Gist/Github",
+        description=("Please paste the url of test specs."),
     )
 
 
@@ -47,49 +45,43 @@ def automate_function(
     """
     # the context provides a conveniet way, to receive the triggering version
     version_root_object = automate_context.receive_version()
+    mp.init(version_root_object)
 
-    objects_with_forbidden_speckle_type = [
-        b
-        for b in flatten_base(version_root_object)
-        if b.speckle_type == function_inputs.forbidden_speckle_type
-    ]
-    count = len(objects_with_forbidden_speckle_type)
+    specs_functions = get_funcs_from_url(function_inputs.url)
+    mp.run(*specs_functions)
 
-    if count > 0:
-        # this is how a run is marked with a failure cause
-        automate_context.attach_error_to_objects(
-            category="Forbidden speckle_type"
-            f" ({function_inputs.forbidden_speckle_type})",
-            object_ids=[o.id for o in objects_with_forbidden_speckle_type if o.id],
-            message="This project should not contain the type: "
-            f"{function_inputs.forbidden_speckle_type}",
-        )
+    failed_count = 0
+    for case in mp.get_test_cases():
+        assertions = case.assertions
+        for assertion in assertions:
+            if assertion.failed():
+                failed_count += 1
+                # this is how a run is marked with a failure cause
+                automate_context.attach_error_to_objects(
+                    category=case.spec_name,
+                    object_ids=assertion.failing,
+                    message=format_error_message(case, assertion),
+                )
+
+    if failed_count > 0:
         automate_context.mark_run_failed(
-            "Automation failed: "
-            f"Found {count} object that have one of the forbidden speckle types: "
-            f"{function_inputs.forbidden_speckle_type}"
+            "Some tests failed: "
+            f"{failed_count} out of {len(mp.get_test_cases())} specs failed"
+            "See the Results for more information."
         )
-
         # set the automation context view, to the original model / version view
         # to show the offending objects
         automate_context.set_context_view()
-
     else:
-        automate_context.mark_run_success("No forbidden types found.")
+        automate_context.mark_run_success("All tests passed :)")
 
     # if the function generates file results, this is how it can be
     # attached to the Speckle project / model
     # automate_context.store_file_result("./report.pdf")
 
 
-def automate_function_without_inputs(automate_context: AutomationContext) -> None:
-    """A function example without inputs.
-
-    If your function does not need any input variables,
-     besides what the automation context provides,
-     the inputs argument can be omitted.
-    """
-    pass
+def format_error_message(case, assertion) -> str:
+    return f"{case.spec_name}.\nOn {len(assertion.failed)} objects, assertion {assertion.assertion_type} failed."
 
 
 # make sure to call the function with the executor
@@ -101,3 +93,4 @@ if __name__ == "__main__":
 
     # if the function has no arguments, the executor can handle it like so
     # execute_automate_function(automate_function_without_inputs)
+
