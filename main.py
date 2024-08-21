@@ -1,10 +1,10 @@
-"""
-This module contains the business logic of the function.
+"""This module contains the business logic of the function.
 
 Use the automation_context module to wrap your function in an
   Automate context helper
 """
 
+import maple as mp
 from maple.models import maple
 from pydantic import Field
 from speckle_automate import (
@@ -12,7 +12,7 @@ from speckle_automate import (
     AutomationContext,
     execute_automate_function,
 )
-import maple as mp
+
 from utils import get_funcs_from_url
 
 
@@ -50,6 +50,7 @@ def automate_function(
 
     specs_functions = get_funcs_from_url(function_inputs.url)
     mp.run(*specs_functions)
+    mp.generate_report("./reports/")
 
     failed_count = 0
     for case in mp.get_test_cases():
@@ -62,6 +63,12 @@ def automate_function(
                     category=case.spec_name,
                     object_ids=assertion.failing,
                     message=format_error_message(case, assertion),
+                )
+            else:
+                automate_context.attach_info_to_objects(
+                    category=case.spec_name,
+                    object_ids=assertion.passing,
+                    message=f"{case.spec_name} Passed.",
                 )
 
     if failed_count > 0:
@@ -78,13 +85,31 @@ def automate_function(
 
     # if the function generates file results, this is how it can be
     # attached to the Speckle project / model
-    # automate_context.store_file_result("./report.pdf")
+    filename = get_last_report()
+    automate_context.store_file_result(filename)
+
+
+def get_last_report():
+    import os
+
+    path = "./reports/"
+    files = os.listdir(path)
+    paths = [os.path.join(path, basename) for basename in files]
+    return max(paths, key=os.path.getctime)
 
 
 def format_error_message(
     case: maple.models.Result, assertion: maple.models.Assertion
 ) -> str:
-    return f"{case.spec_name}.\nOn {len(assertion.failing)} objects, assertion {assertion.comparer} failed."
+    """Creates error message for a failed Result and Assertion.
+
+    Args:
+        case: a maple Case
+        assertion: a maple Assertion
+
+    Returns: str
+    """
+    return f"{case.spec_name}.\nOn {len(assertion.failing)} objects, assertion {assertion.comparer} failed."  # noqa: E501
 
 
 # make sure to call the function with the executor
