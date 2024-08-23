@@ -437,13 +437,13 @@ i18n = ["Babel (>=2.7)"]
 
 [[package]]
 name = "maple-spec"
-version = "0.0.7"
+version = "0.0.9"
 description = "A testing library for Speckle models"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "maple_spec-0.0.7-py3-none-any.whl", hash = "sha256:940b513ad8d4ead2078d8ba3597ee28987924407e1e6033f3e9eaf34edcde73f"},
-    {file = "maple_spec-0.0.7.tar.gz", hash = "sha256:3e5e023f469d673592835e1a4f0d0e51c0a3657e4dbb5cd4dd38f018e1408a42"},
+    {file = "maple_spec-0.0.9-py3-none-any.whl", hash = "sha256:c62d563245e27a87e6024ee28404256f743317a992844800276686583c71589c"},
+    {file = "maple_spec-0.0.9.tar.gz", hash = "sha256:6f59d875e50faab799ee668cd29230bc8a3f04cc2941a2d30aadfabb522f3e2c"},
 ]
 
 [package.dependencies]
@@ -1389,4 +1389,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "47e022d8fe8a2f5f9508064f136bba600e2df3c4edea799681ed46b371e2649e"
+content-hash = "80d68eb7bfd83f92849a3710364cd028ff74ba96ebc017758502021cbc9ea861"

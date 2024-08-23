@@ -50,7 +50,7 @@ def automate_function(
 
     specs_functions = get_funcs_from_url(function_inputs.url)
     mp.run(*specs_functions)
-    mp.generate_report("./reports/")
+    filename = mp.generate_report("./reports/")
 
     failed_count = 0
     for case in mp.get_test_cases():
@@ -85,17 +85,7 @@ def automate_function(
 
     # if the function generates file results, this is how it can be
     # attached to the Speckle project / model
-    filename = get_last_report()
     automate_context.store_file_result(filename)
-
-
-def get_last_report():
-    import os
-
-    path = "./reports/"
-    files = os.listdir(path)
-    paths = [os.path.join(path, basename) for basename in files]
-    return max(paths, key=os.path.getctime)
 
 
 def format_error_message(
@@ -118,6 +108,3 @@ if __name__ == "__main__":
 
     # pass in the function reference with the inputs schema to the executor
     execute_automate_function(automate_function, FunctionInputs)
-
-    # if the function has no arguments, the executor can handle it like so
-    # execute_automate_function(automate_function_without_inputs)
